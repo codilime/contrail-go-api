@@ -18,14 +18,14 @@ import (
 )
 
 type networkCommonOptions struct {
-	project string
+	project    string
 	project_id string
 }
 
 type networkListOptions struct {
 	allTenants bool
-	brief bool
-	detail bool
+	brief      bool
+	detail     bool
 }
 
 type networkCreateOptions struct {
@@ -42,10 +42,10 @@ type networkShowOptions struct {
 
 var (
 	networkCommonOpts networkCommonOptions
-	networkListOpts networkListOptions
+	networkListOpts   networkListOptions
 	networkCreateOpts networkCreateOptions
 	networkDeleteOpts networkDeleteOptions
-	networkShowOpts networkShowOptions
+	networkShowOpts   networkShowOptions
 )
 
 const networkShowBrief = `  Network: {{.Name}}
@@ -68,7 +68,7 @@ func networkList(client *contrail.Client, flagSet *flag.FlagSet) {
 	if !networkListOpts.allTenants {
 		var err error
 		parent_id, err = config.GetProjectId(
-			client,	networkCommonOpts.project,
+			client, networkCommonOpts.project,
 			networkCommonOpts.project_id)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
@@ -85,7 +85,7 @@ func networkList(client *contrail.Client, flagSet *flag.FlagSet) {
 
 	if networkListOpts.brief || networkListOpts.detail {
 		var tmpl string
-		if (networkListOpts.detail) {
+		if networkListOpts.detail {
 			tmpl = networkShowDetail
 		} else {
 			tmpl = networkShowBrief
@@ -148,7 +148,7 @@ func networkNameOrIdUsage(argument *flag.FlagSet) func() {
 
 func getNetworkUuidByName(
 	client *contrail.Client, project_name, project_id, name string) (
-		string, error) {
+	string, error) {
 	var fqn []string
 	if len(project_id) > 0 {
 		uuid := strings.ToLower(project_id)
@@ -226,7 +226,7 @@ func networkShow(client *contrail.Client, flagSet *flag.FlagSet) {
 	}
 
 	var tmpl string
-	if (networkShowOpts.detail) {
+	if networkShowOpts.detail {
 		tmpl = networkShowDetail
 	} else {
 		tmpl = networkShowBrief
@@ -236,21 +236,9 @@ func networkShow(client *contrail.Client, flagSet *flag.FlagSet) {
 	t.Execute(os.Stdout, info)
 }
 
-func initCommonFlags(flagSet *flag.FlagSet) {
-	defaultProject := os.Getenv("OS_TENANT_NAME")
-	if len(defaultProject) == 0 {
-		defaultProject = "admin"
-	}
-	
-	flagSet.StringVar(&networkCommonOpts.project, "project", defaultProject,
-		"Project name (Env: OS_TENANT_NAME)")
-	flagSet.StringVar(&networkCommonOpts.project_id, "project-id",
-		os.Getenv("OS_TENANT_ID"), "Project id (Env: OS_TENANT_ID)")
-}
-
 func init() {
 	listFlags := flag.NewFlagSet("network-list", flag.ExitOnError)
-	initCommonFlags(listFlags)
+	initCommonProjectOptions(listFlags)
 	listFlags.BoolVar(&networkListOpts.allTenants, "all-tenants", false,
 		"Display networks for all tenants")
 	listFlags.BoolVar(&networkListOpts.brief, "brief", false,
@@ -260,21 +248,21 @@ func init() {
 	RegisterCliCommand("network-list", listFlags, networkList)
 
 	createFlags := flag.NewFlagSet("network-create", flag.ExitOnError)
-	initCommonFlags(createFlags)
+	initCommonProjectOptions(createFlags)
 	createFlags.StringVar(&networkCreateOpts.subnet, "subnet", "",
 		"Subnet prefix for network")
 	createFlags.Usage = networkCreateUsage(createFlags)
 	RegisterCliCommand("network-create", createFlags, networkCreate)
 
 	deleteFlags := flag.NewFlagSet("network-delete", flag.ExitOnError)
-	initCommonFlags(deleteFlags)
+	initCommonProjectOptions(deleteFlags)
 	deleteFlags.BoolVar(&networkDeleteOpts.purge, "purge", false,
 		"Delete all dependent objects")
 	deleteFlags.Usage = networkNameOrIdUsage(deleteFlags)
 	RegisterCliCommand("network-delete", deleteFlags, networkDelete)
 
 	showFlags := flag.NewFlagSet("network-show", flag.ExitOnError)
-	initCommonFlags(showFlags)
+	initCommonProjectOptions(showFlags)
 	showFlags.BoolVar(&networkShowOpts.detail, "detail", false,
 		"Detail output")
 	showFlags.Usage = networkNameOrIdUsage(showFlags)

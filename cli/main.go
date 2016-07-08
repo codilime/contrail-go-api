@@ -5,9 +5,9 @@
 package main
 
 import (
-	"github.com/Juniper/contrail-go-api"
 	"flag"
 	"fmt"
+	"github.com/Juniper/contrail-go-api"
 	"os"
 )
 
@@ -15,26 +15,26 @@ type ExecFunc func(client *contrail.Client, flagSet *flag.FlagSet)
 
 type CliCommand struct {
 	flagSet *flag.FlagSet
-	exec ExecFunc
+	exec    ExecFunc
 }
 
 var (
 	/*
-         * OpenContrail API server
-         */
+	 * OpenContrail API server
+	 */
 	oc_server string
-	oc_port int
+	oc_port   int
 
 	/*
 	 * Authentication
 	 */
 	// os_auth_strategy string
-	os_auth_url string
+	os_auth_url    string
 	os_tenant_name string
-	os_tenant_id string
-	os_username string
-	os_password string
-	os_token string
+	os_tenant_id   string
+	os_username    string
+	os_password    string
+	os_token       string
 
 	commandMap map[string]CliCommand = make(map[string]CliCommand, 0)
 )

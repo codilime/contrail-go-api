@@ -271,6 +271,12 @@ func attributeEqual(lhs, rhs LinkAttribute) bool {
 	return reflect.DeepEqual(a1.Interface(), a2.Interface())
 }
 
+func TypeToObject(typename string) IObject {
+	var xtype reflect.Type = typeMap[typename]
+	valueT := reflect.New(xtype)
+	return valueT.Interface().(IObject)
+}
+
 // UpdateReference is a helper function that compares two reference lists and generates the
 // appropriate list of changes to be resented as POST requests to the
 // ref-update URL on the API server.

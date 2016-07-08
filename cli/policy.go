@@ -598,18 +598,6 @@ func policyDetach(client *contrail.Client, flagSet *flag.FlagSet) {
 	}
 }
 
-func policyInitCommonOptions(flagSet *flag.FlagSet) {
-	defaultProject := os.Getenv("OS_TENANT_NAME")
-	if len(defaultProject) == 0 {
-		defaultProject = "admin"
-	}
-
-	flagSet.StringVar(&policyCommonOpts.project, "project", defaultProject,
-		"Project name (Env: OS_TENANT_NAME)")
-	flagSet.StringVar(&policyCommonOpts.projectId, "project-id",
-		os.Getenv("OS_TENANT_ID"), "Project id (Env: OS_TENANT_ID)")
-}
-
 func policyRuleAddUpdateInitOptions(flagSet *flag.FlagSet) {
 	flagSet.StringVar(&policyRuleOpts.policy, "policy", "",
 		"Policy name or uuid")
@@ -636,14 +624,6 @@ func policyRuleAddUpdateInitOptions(flagSet *flag.FlagSet) {
 		"Discard packets")
 	flagSet.BoolVar(&policyRuleOpts.actionDrop, "pass", false,
 		"Accept packets (default)")
-}
-
-func policyCreateUsage(argument *flag.FlagSet) func() {
-	flagSet := argument
-	return func() {
-		flagSet.PrintDefaults()
-		fmt.Fprintf(os.Stderr, "    policy-name\n")
-	}
 }
 
 func (p *policyProtocolValue) Set(value string) error {
@@ -685,7 +665,7 @@ func (p *policyPortValue) Get() interface{} {
 
 func init() {
 	listFlags := flag.NewFlagSet("policy-list", flag.ExitOnError)
-	policyInitCommonOptions(listFlags)
+	initCommonProjectOptions(listFlags)
 	listFlags.BoolVar(&policyListOpts.allTenants,
 		"all-tenants", false, "Display policies for all tenants")
 	listFlags.BoolVar(&policyListOpts.detail,
@@ -693,24 +673,24 @@ func init() {
 	RegisterCliCommand("policy-list", listFlags, policyList)
 
 	showFlags := flag.NewFlagSet("policy-show", flag.ExitOnError)
-	policyInitCommonOptions(showFlags)
+	initCommonProjectOptions(showFlags)
 	showFlags.StringVar(&policyOpOpts.policy, "policy", "",
 		"Policy name or uuid")
 	RegisterCliCommand("policy-show", showFlags, policyShow)
 
 	createFlags := flag.NewFlagSet("policy-create", flag.ExitOnError)
-	policyInitCommonOptions(createFlags)
-	createFlags.Usage = policyCreateUsage(createFlags)
+	initCommonProjectOptions(createFlags)
+	createFlags.Usage = defaultUsage("policy-create", "policy-name", createFlags)
 	RegisterCliCommand("policy-create", createFlags, policyCreate)
 
 	deleteFlags := flag.NewFlagSet("policy-delete", flag.ExitOnError)
-	policyInitCommonOptions(deleteFlags)
+	initCommonProjectOptions(deleteFlags)
 	deleteFlags.StringVar(&policyOpOpts.policy, "policy", "",
 		"Policy name or uuid")
 	RegisterCliCommand("policy-delete", deleteFlags, policyDelete)
 
 	ruleAddFlags := flag.NewFlagSet("policy-rule-add", flag.ExitOnError)
-	policyInitCommonOptions(ruleAddFlags)
+	initCommonProjectOptions(ruleAddFlags)
 	policyRuleAddUpdateInitOptions(ruleAddFlags)
 	ruleAddFlags.StringVar(&policyRuleOpts.afterRule, "after", "",
 		"Add new rule after the rule with the specified uuid")
@@ -718,7 +698,7 @@ func init() {
 
 	ruleUpdateFlags := flag.NewFlagSet("policy-rule-update",
 		flag.ExitOnError)
-	policyInitCommonOptions(ruleUpdateFlags)
+	initCommonProjectOptions(ruleUpdateFlags)
 	policyRuleAddUpdateInitOptions(ruleUpdateFlags)
 	ruleUpdateFlags.StringVar(&policyRuleOpts.ruleId, "rule", "",
 		"Rule uuid to update")
@@ -727,7 +707,7 @@ func init() {
 
 	ruleDeleteFlags := flag.NewFlagSet("policy-rule-delete",
 		flag.ExitOnError)
-	policyInitCommonOptions(ruleDeleteFlags)
+	initCommonProjectOptions(ruleDeleteFlags)
 	ruleDeleteFlags.StringVar(&policyRuleOpts.policy, "policy", "",
 		"Policy name or uuid")
 	ruleDeleteFlags.StringVar(&policyRuleOpts.ruleId, "rule", "",
@@ -736,7 +716,7 @@ func init() {
 		policyRuleDelete)
 
 	attachFlags := flag.NewFlagSet("policy-attach", flag.ExitOnError)
-	policyInitCommonOptions(attachFlags)
+	initCommonProjectOptions(attachFlags)
 	attachFlags.StringVar(&policyAttachOpts.policy, "policy", "",
 		"Policy name or uuid")
 	attachFlags.StringVar(&policyAttachOpts.network, "network", "",
@@ -744,7 +724,7 @@ func init() {
 	RegisterCliCommand("policy-attach", attachFlags, policyAttach)
 
 	detachFlags := flag.NewFlagSet("policy-detach", flag.ExitOnError)
-	policyInitCommonOptions(detachFlags)
+	initCommonProjectOptions(detachFlags)
 	detachFlags.StringVar(&policyAttachOpts.policy, "policy", "",
 		"Policy name or uuid")
 	detachFlags.StringVar(&policyAttachOpts.network, "network", "",
