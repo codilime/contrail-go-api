@@ -15,6 +15,14 @@ import (
 	"reflect"
 	"strings"
 	"unicode"
+
+	"github.com/Juniper/contrail-go-api/logging"
+	log "github.com/sirupsen/logrus"
+)
+
+const (
+	loggerRequestPrepend  = "[Controller-REQUEST]"
+	loggerResponsePrepend = "[Controller-RESPONSE]"
 )
 
 // TypeMap is used to inject the auto-generated types library.
@@ -125,6 +133,7 @@ func typename(ptr IObject) string {
 func (c *Client) httpPost(url string, bodyType string, body io.Reader) (
 	*http.Response, error) {
 	req, err := http.NewRequest("POST", url, body)
+	log.Debugln(loggerRequestPrepend, logging.HTTPMessageLogger(req))
 	if err != nil {
 		return nil, err
 	}
@@ -133,12 +142,16 @@ func (c *Client) httpPost(url string, bodyType string, body io.Reader) (
 	if err != nil {
 		return nil, err
 	}
-	return c.httpClient.Do(req)
+
+	res, err := c.httpClient.Do(req)
+	log.Debugln(loggerResponsePrepend, logging.HTTPMessageLogger(res))
+	return res, err
 }
 
 func (c *Client) httpPut(url string, bodyType string, body io.Reader) (
 	*http.Response, error) {
 	req, err := http.NewRequest("PUT", url, body)
+	log.Debugln(loggerRequestPrepend, logging.HTTPMessageLogger(req))
 	if err != nil {
 		return nil, err
 	}
@@ -147,11 +160,15 @@ func (c *Client) httpPut(url string, bodyType string, body io.Reader) (
 	if err != nil {
 		return nil, err
 	}
-	return c.httpClient.Do(req)
+
+	res, err := c.httpClient.Do(req)
+	log.Debugln(loggerResponsePrepend, logging.HTTPMessageLogger(res))
+	return res, err
 }
 
 func (c *Client) httpGet(url string) (*http.Response, error) {
 	req, err := http.NewRequest("GET", url, nil)
+	log.Debugln(loggerRequestPrepend, logging.HTTPMessageLogger(req))
 	if err != nil {
 		return nil, err
 	}
@@ -159,11 +176,15 @@ func (c *Client) httpGet(url string) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	return c.httpClient.Do(req)
+
+	res, err := c.httpClient.Do(req)
+	log.Debugln(loggerResponsePrepend, logging.HTTPMessageLogger(res))
+	return res, err
 }
 
 func (c *Client) httpDelete(url string) (*http.Response, error) {
 	req, err := http.NewRequest("DELETE", url, nil)
+	log.Debugln(loggerRequestPrepend, logging.HTTPMessageLogger(req))
 	if err != nil {
 		return nil, err
 	}
@@ -171,7 +192,10 @@ func (c *Client) httpDelete(url string) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	return c.httpClient.Do(req)
+
+	res, err := c.httpClient.Do(req)
+	log.Debugln(loggerResponsePrepend, logging.HTTPMessageLogger(res))
+	return res, err
 }
 
 // Create an object in the OpenContrail API server.
