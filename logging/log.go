@@ -26,9 +26,15 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const (
+	EmptyRequestResponseMessage = "Empty request/response."
+	WrongHTTPMessageParameter   = "HTTPMessage run with wrong parameter (not request or response)"
+	EmptyHTTPBody               = "Body is empty."
+)
+
 // Function doesn't return error, because it is just for logging.
 // If conversion to json returns error we want to log variable as raw
-func VariableToJSON(variable interface{}) string {
+func variableToJSON(variable interface{}) string {
 	jsonOutput, err := json.Marshal(variable)
 	if err != nil {
 		log.Debugln("Converting to JSON error:", err)
@@ -37,29 +43,12 @@ func VariableToJSON(variable interface{}) string {
 	return string(jsonOutput)
 }
 
-func HTTPMessageLogger(param interface{}) string {
-
-	if param == nil {
-		return "Empty request/response. Some error occured."
-	}
-
-	var body io.ReadCloser
-
-	switch param.(type) {
-	default:
-		log.Debugln("HTTPMessageLogger run with wrong parameter (not request or response)")
-		return "HTTPMessageLogger run with wrong parameter (not request or response)"
-	case *http.Request:
-		body = (param.(*http.Request)).Body
-	case *http.Response:
-		body = (param.(*http.Response)).Body
-	}
-
+func readMessageBody(body io.ReadCloser) ([]byte, error) {
 	var buf []byte
 	var err error
 
 	if body == nil {
-		buf = []byte("Body is empty.")
+		buf = []byte(EmptyHTTPBody)
 	} else {
 		buf, err = ioutil.ReadAll(body)
 		if err != nil {
@@ -67,18 +56,47 @@ func HTTPMessageLogger(param interface{}) string {
 			buf = []byte("")
 		}
 	}
+	return buf, err
+}
+
+func buildLogMessage(packageTag string, param interface{}, bodyBuffer *[]byte) string {
+
+	var logMsg string
 
 	switch param.(type) {
 	case *http.Request:
 		request := param.(*http.Request)
-		request.Body = ioutil.NopCloser(bytes.NewBuffer(buf))
-		return fmt.Sprintf("[%s]=>[%s] { Header: %s, Body: %s }", request.Method, request.URL.String(), VariableToJSON(request.Header), buf)
+		// Body is a io.ReadCloser, so we need to construct one
+		// in place of the one that we already read based on buffer
+		// containing body content
+		request.Body = ioutil.NopCloser(bytes.NewBuffer(*bodyBuffer))
+		logMsg = fmt.Sprintf("[%s][%s]=>[%s] { Header: %s, Body: %s }", packageTag, request.Method, request.URL.String(), variableToJSON(request.Header), *bodyBuffer)
 	case *http.Response:
 		response := param.(*http.Response)
-		response.Body = ioutil.NopCloser(bytes.NewBuffer(buf))
-		return fmt.Sprintf("{ Status: %s, Header: %s, Body: %s }", response.Status, VariableToJSON(response.Header), buf)
+		response.Body = ioutil.NopCloser(bytes.NewBuffer(*bodyBuffer))
+		logMsg = fmt.Sprintf("[%s]{ Status: %s, Header: %s, Body: %s }", packageTag, response.Status, variableToJSON(response.Header), *bodyBuffer)
 	}
 
-	// NEVER REACHED
-	return ""
+	return logMsg
+}
+
+func HTTPMessage(packageTag string, param interface{}) string {
+
+	if param == nil {
+		return EmptyRequestResponseMessage
+	}
+
+	var buf []byte
+
+	switch param.(type) {
+	default:
+		log.Debugln(WrongHTTPMessageParameter)
+		return WrongHTTPMessageParameter
+	case *http.Request:
+		buf, _ = readMessageBody((param.(*http.Request)).Body)
+	case *http.Response:
+		buf, _ = readMessageBody((param.(*http.Response)).Body)
+	}
+
+	return buildLogMessage(packageTag, param, &buf)
 }
