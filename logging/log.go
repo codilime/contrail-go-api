@@ -88,14 +88,22 @@ func HTTPMessage(packageTag string, param interface{}) string {
 
 	var buf []byte
 
-	switch param.(type) {
+	switch paramType := param.(type) {
 	default:
 		log.Debugln(WrongHTTPMessageParameter)
 		return WrongHTTPMessageParameter
 	case *http.Request:
-		buf, _ = readMessageBody((param.(*http.Request)).Body)
+		if nil == paramType {
+			return EmptyRequestResponseMessage
+		} else {
+			buf, _ = readMessageBody((param.(*http.Request)).Body)
+		}
 	case *http.Response:
-		buf, _ = readMessageBody((param.(*http.Response)).Body)
+		if nil == paramType {
+			return EmptyRequestResponseMessage
+		} else {
+			buf, _ = readMessageBody((param.(*http.Response)).Body)
+		}
 	}
 
 	return buildLogMessage(packageTag, param, &buf)
