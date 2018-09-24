@@ -83,6 +83,8 @@ func buildLogMessage(packageTag string, param interface{}, bodyBuffer *[]byte) s
 func HTTPMessage(packageTag string, param interface{}) string {
 
 	if param == nil {
+		// Nil parameter is not an error in this function context,
+		// therefore just return a proper string msg.
 		return EmptyRequestResponseMessage
 	}
 
